@@ -28,22 +28,35 @@
 
 WIZnet_Chip* WIZnet_Chip::inst;
 
-WIZnet_Chip::WIZnet_Chip(PinName mosi, PinName miso, PinName sclk, PinName _cs, PinName _reset):
-    cs(_cs), reset_pin(_reset)
-{
-    spi = new SPI(mosi, miso, sclk);
-    cs = 1;
-    reset_pin = 1;
-    inst = this;
-    sock_any_port = SOCK_ANY_PORT_NUM;
-}
+// WIZnet_Chip::WIZnet_Chip(PinName mosi, PinName miso, PinName sclk, PinName _cs, PinName _reset):
+//     cs(_cs), reset_pin(_reset)
+// {
+//     spi = new SPI(mosi, miso, sclk);
+//     cs = 1;
+//     reset_pin = 1;
+//     inst = this;
+//     sock_any_port = SOCK_ANY_PORT_NUM;
+// }
 
-WIZnet_Chip::WIZnet_Chip(SPI* spi, PinName _cs, PinName _reset):
-    cs(_cs), reset_pin(_reset)
-{
-    this->spi = spi;
-    cs = 1;
-    reset_pin = 1;
+// WIZnet_Chip::WIZnet_Chip(SPI* spi, PinName _cs, PinName _reset):
+//     cs(_cs), reset_pin(_reset)
+// {
+//     this->spi = spi;
+//     cs = 1;
+//     reset_pin = 1;
+//     inst = this;
+//     sock_any_port = SOCK_ANY_PORT_NUM;
+// }
+
+Wiznet_Chip::Wiznet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin) {
+    this->hspi = hspi;
+    this->cs_port = cs_port;
+    this->cs_pin = cs_pin;
+    this->reset_port = reset_port;
+    this->reset_pin = reset_pin;
+
+    HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_SET);
+    HAL_GPIO_WritePin(reset_port, reset_pin, GPIO_PIN_SET);
     inst = this;
     sock_any_port = SOCK_ANY_PORT_NUM;
 }
@@ -305,14 +318,24 @@ void WIZnet_Chip::scmd(int socket, Command cmd)
 
 void WIZnet_Chip::spi_write(uint16_t addr, uint8_t cb, const uint8_t *buf, uint16_t len)
 {
-    cs = 0;
-    spi->write(addr >> 8);
-    spi->write(addr & 0xff);
-    spi->write(cb);
-    for(int i = 0; i < len; i++) {
-        spi->write(buf[i]);
-    }
-    cs = 1;
+    // cs = 0;
+    // spi->write(addr >> 8);
+    // spi->write(addr & 0xff);
+    // spi->write(cb);
+    // for(int i = 0; i < len; i++) {
+    //     spi->write(buf[i]);
+    // }
+    // cs = 1;
+
+    uint8_t addr_h = addr >> 8;
+    uint8_t addr_l = addr & 0xff;
+
+    HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_RESET);
+    HAL_SPI_Transmit(hspi, &addr_h, 1, 500);
+    HAL_SPI_Transmit(hspi, &addr_l, 1, 500);
+    HAL_SPI_Transmit(hspi, &cb, 1, 500);
+    HAL_SPI_Transmit(hspi, buf, len, 500);
+    HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_SET);
 
 #if DBG_SPI
     debug("[SPI]W %04x(%02x %d)", addr, cb, len);
@@ -329,14 +352,27 @@ void WIZnet_Chip::spi_write(uint16_t addr, uint8_t cb, const uint8_t *buf, uint1
 
 void WIZnet_Chip::spi_read(uint16_t addr, uint8_t cb, uint8_t *buf, uint16_t len)
 {
-    cs = 0;
-    spi->write(addr >> 8);
-    spi->write(addr & 0xff);
-    spi->write(cb);
+    const uint8_t zero = 0;
+    // cs = 0;
+    // spi->write(addr >> 8);
+    // spi->write(addr & 0xff);
+    // spi->write(cb);
+    // for(int i = 0; i < len; i++) {
+    //     buf[i] = spi->write(0);
+    // }
+    // cs = 1;
+
+    uint8_t addr_h = addr >> 8;
+    uint8_t addr_l = addr & 0xff;
+
+    HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_RESET);
+    HAL_SPI_Transmit(hspi, &addr_h, 1, 500);
+    HAL_SPI_Transmit(hspi, &addr_l, 1, 500);
+    HAL_SPI_Transmit(hspi, &cb, 1, 500);
     for(int i = 0; i < len; i++) {
-        buf[i] = spi->write(0);
+        HAL_SPI_TransmitReceive(hspi, &zero, &buf[i], 1, 500);
     }
-    cs = 1;
+    HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_SET);
 
 #if DBG_SPI
     debug("[SPI]R %04x(%02x %d)", addr, cb, len);

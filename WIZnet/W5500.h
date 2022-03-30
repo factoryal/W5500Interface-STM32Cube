@@ -184,8 +184,9 @@ public:
     * @param cs cs of the W5500
     * @param reset reset pin of the W5500
     */
-    WIZnet_Chip(PinName mosi, PinName miso, PinName sclk, PinName cs, PinName reset);
-    WIZnet_Chip(SPI* spi, PinName cs, PinName reset);
+    // WIZnet_Chip(PinName mosi, PinName miso, PinName sclk, PinName cs, PinName reset);
+    // WIZnet_Chip(SPI* spi, PinName cs, PinName reset);
+    Wiznet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin);
 
     /*
     * Set MAC Address to W5500
@@ -1261,9 +1262,14 @@ protected:
 
     void spi_write(uint16_t addr, uint8_t cb, const uint8_t *buf, uint16_t len);
     void spi_read(uint16_t addr, uint8_t cb, uint8_t *buf, uint16_t len);
-    SPI* spi;
-    DigitalOut cs;
-    DigitalOut reset_pin;
+    // SPI* spi;
+    // DigitalOut cs;
+    // DigitalOut reset_pin;
+    SPI_HandleTypeDef* hspi;
+    GPIO_TypeDef* cs_port;
+    uint32_t cs_pin;
+    GPIO_TypeDef* reset_port;
+    uint32_t reset_pin;
 };
 
 extern uint32_t str_to_ip(const char* str);
