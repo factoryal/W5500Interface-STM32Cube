@@ -1,10 +1,3 @@
-# !!!WARNING!!!
-**THIS LIBRARY IS UNDER DEVELOPMENT!**
-
-I forgot to create `dev` branch to separate release purpose.
-
-Porting is not finished so you cannot use this directly on STM32Cube HAL yet.
-
 # W5500Interface-STM32Cube
 
 A STM32 HAL library can handle W5500 Wiznet ethernet controller written in C++.
