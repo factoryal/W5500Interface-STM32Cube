@@ -10,6 +10,9 @@ Forked from mbed [W5500Interface](https://os.mbed.com/teams/EthernetInterfaceW55
 
 ```cpp
 EthernetInterface(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin);
+
+// if you pulled up reset pin to always high and not controlled by STM32,
+EthernetInterface(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin);
 ```
 where,
 
