@@ -57,11 +57,13 @@ int TCPSocketServer::accept(TCPSocketConnection& connection)
     if (_sock_fd < 0) {
         return -1;
     }
-    Timer t;
-    t.reset();
-    t.start();
+//    Timer t;
+//    t.reset();
+//    t.start();
+    uint32_t t;
+    t = HAL_GetTick();
     while(1) {
-        if (t.read_ms() > _timeout && _blocking == false) {
+        if (HAL_GetTick() - t > (uint32_t)_timeout && _blocking == false) {
             return -1;
         }
         if (eth->sreg<uint8_t>(_sock_fd, Sn_SR) == WIZnet_Chip::SOCK_ESTABLISHED) {
@@ -70,7 +72,7 @@ int TCPSocketServer::accept(TCPSocketConnection& connection)
     }
     uint32_t ip = eth->sreg<uint32_t>(_sock_fd, Sn_DIPR);
     char host[16];
-    snprintf(host, sizeof(host), "%d.%d.%d.%d", (ip>>24)&0xff, (ip>>16)&0xff, (ip>>8)&0xff, ip&0xff);
+    snprintf(host, sizeof(host), "%d.%d.%d.%d", (uint8_t)(ip>>24)&0xff, (uint8_t)(ip>>16)&0xff, (uint8_t)(ip>>8)&0xff, (uint8_t)ip&0xff);
     uint16_t port = eth->sreg<uint16_t>(_sock_fd, Sn_DPORT);
 
     // change this server socket to connection socket.
@@ -82,13 +84,13 @@ int TCPSocketServer::accept(TCPSocketConnection& connection)
     _sock_fd = -1; // want to assign new available _sock_fd.
     if(bind(listen_port) < 0) {
         // modified by Patrick Pollet
-        error("No more socket for listening, bind error");
+//        error("No more socket for listening, bind error");
         return -1;
     } else {
         //return -1;
         if(listen(1) < 0) {
             // modified by Patrick Pollet
-            error("No more socket for listening, listen error");
+//            error("No more socket for listening, listen error");
             return -1;
         }
     }

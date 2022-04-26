@@ -38,14 +38,14 @@ int Endpoint::set_address(const char* host, const int port)
     // added code for searching instance of WIZnet chip. refer from Wifly Library.
     WIZnet_Chip* eth = WIZnet_Chip::getInstance();
     if (eth == NULL) {
-        error("Endpoint constructor error: no WIZnet chip instance available!\r\n");
+//        error("Endpoint constructor error: no WIZnet chip instance available!\r\n");
         return -1;
     }
     uint32_t addr;
     if (!eth->gethostbyname(host, &addr)) {
         return -1;
     }
-    snprintf(_ipAddress, sizeof(_ipAddress), "%d.%d.%d.%d", (addr>>24)&0xff, (addr>>16)&0xff, (addr>>8)&0xff, addr&0xff);
+    snprintf(_ipAddress, sizeof(_ipAddress), "%d.%d.%d.%d", (uint8_t)(addr>>24)&0xff, (uint8_t)(addr>>16)&0xff, (uint8_t)(addr>>8)&0xff, (uint8_t)addr&0xff);
     _port = port;
     return 0;
 }

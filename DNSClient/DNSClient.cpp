@@ -1,6 +1,7 @@
 // DNSClient.cpp 2013/8/27
-#include "mbed.h"
-#include "mbed_debug.h"
+//#include "mbed.h"
+//#include "mbed_debug.h"
+#include "main.h"
 #include "DNSClient.h"
 #include "UDPSocket.h"
 #include "dnsname.h"
@@ -122,8 +123,9 @@ void DNSClient::resolve(const char* hostname) {
     printHex(buf, size);
 #endif
     m_udp->sendTo(server, (char*)buf, size);
-    m_interval.reset();
-    m_interval.start();
+    m_interval = HAL_GetTick();
+//    m_interval.reset();
+//    m_interval.start();
 }
 
 void DNSClient::poll() {
@@ -147,8 +149,8 @@ void DNSClient::poll() {
             DBG2("m_retry=%d, m_interval=%d\n", m_retry, m_interval.read_ms());
             break;
     }
-    if (m_interval.read_ms() > 1000) {
-        m_interval.stop();
+    if (HAL_GetTick() - m_interval > 1000) {
+//        m_interval.stop();
         DBG2("timeout m_retry=%d\n", m_retry);
         if (++m_retry >= 2) {
             m_state = MYNETDNS_ERROR;

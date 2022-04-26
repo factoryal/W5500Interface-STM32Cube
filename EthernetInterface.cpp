@@ -42,8 +42,14 @@
 //     ip_set = false;
 // }
 
-EthernetInterface::EthernetInterface(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin) :
-    Wiznet_Chip(hspi, cs_port, cs_pin, reset_port, reset_pin)
+EthernetInterface::EthernetInterface(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_port, uint16_t cs_pin) :
+    WIZnet_Chip(hspi, cs_port, cs_pin)
+{
+    ip_set = false;
+}
+
+EthernetInterface::EthernetInterface(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_port, uint16_t cs_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin) :
+    WIZnet_Chip(hspi, cs_port, cs_pin, reset_port, reset_pin)
 {
     ip_set = false;
 }

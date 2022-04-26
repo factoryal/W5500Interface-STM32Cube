@@ -17,7 +17,8 @@ protected:
     int query(uint8_t buf[], int size, const char* hostname);
     void resolve(const char* hostname);
     uint8_t m_id[2];
-    Timer m_interval;
+//    Timer m_interval;
+    uint32_t m_interval;
     int m_retry;
     const char* m_hostname;
 private:

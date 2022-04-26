@@ -3,6 +3,11 @@
 
 //#include "mbed.h"
 //#include "mbed_debug.h"
+#include "main.h"
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
+using namespace std;
 
 #define USE_W5500
 //#define USE_W5200 // don't use this library

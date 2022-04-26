@@ -1,7 +1,8 @@
 #pragma once
 
-#include "mbed.h"
-#include "mbed_debug.h"
+//#include "mbed.h"
+//#include "mbed_debug.h"
+#include "main.h"
 
 
 #define TEST_ASSERT(A) while(!(A)){debug("\n\n%s@%d %s ASSERT!\n\n",__PRETTY_FUNCTION__,__LINE__,#A);exit(1);};
@@ -186,7 +187,8 @@ public:
     */
     // WIZnet_Chip(PinName mosi, PinName miso, PinName sclk, PinName cs, PinName reset);
     // WIZnet_Chip(SPI* spi, PinName cs, PinName reset);
-    Wiznet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin);
+    WIZnet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint16_t cs_pin);
+    WIZnet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint16_t cs_pin, GPIO_TypeDef* reset_port, uint16_t reset_pin);
 
     /*
     * Set MAC Address to W5500
@@ -326,7 +328,7 @@ public:
     void reg_wr(uint16_t addr, uint8_t cb, T data) {
         uint8_t buf[sizeof(T)];
         *reinterpret_cast<T*>(buf) = data;
-        for(int i = 0; i < sizeof(buf)/2; i++) { //  Little Endian to Big Endian
+        for(int i = 0; i < (int)sizeof(buf)/2; i++) { //  Little Endian to Big Endian
             uint8_t t = buf[i];
             buf[i] = buf[sizeof(buf)-1-i];
             buf[sizeof(buf)-1-i] = t;
@@ -343,7 +345,7 @@ public:
     T reg_rd(uint16_t addr, uint8_t cb) {
         uint8_t buf[sizeof(T)];
         spi_read(addr, cb, buf, sizeof(buf));
-        for(int i = 0; i < sizeof(buf)/2; i++) { // Big Endian to Little Endian
+        for(int i = 0; i < (int)sizeof(buf)/2; i++) { // Big Endian to Little Endian
             uint8_t t = buf[i];
             buf[i] = buf[sizeof(buf)-1-i];
             buf[sizeof(buf)-1-i] = t;
@@ -1267,9 +1269,9 @@ protected:
     // DigitalOut reset_pin;
     SPI_HandleTypeDef* hspi;
     GPIO_TypeDef* cs_port;
-    uint32_t cs_pin;
+    uint16_t cs_pin;
     GPIO_TypeDef* reset_port;
-    uint32_t reset_pin;
+    uint16_t reset_pin;
 };
 
 extern uint32_t str_to_ip(const char* str);

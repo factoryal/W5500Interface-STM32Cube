@@ -1,8 +1,10 @@
 // DHCPClient.cpp 2013/4/10
-#include "mbed.h"
-#include "mbed_debug.h"
+//#include "mbed.h"
+//#include "mbed_debug.h"
+#include "main.h"
 #include "UDPSocket.h"
 #include "DHCPClient.h"
+#include <time.h>
 
 #define DBG_DHCP 0
 
@@ -185,13 +187,14 @@ int DHCPClient::setup(int timeout_ms)
             case 1:
                 send_size = discover();
                 m_udp->sendTo(m_server, (char*)m_buf, send_size);
-                m_interval.reset();
-                m_interval.start();
+//                m_interval.reset();
+//                m_interval.start();
+                m_interval = HAL_GetTick();
                 seq++;
                 break;
             case 2:
                 callback();
-                if (m_interval.read_ms() > interval_ms) {
+                if (HAL_GetTick() - m_interval > (uint32_t)interval_ms) {
                     DBG("m_retry: %d\n", m_retry);
                     if (++m_retry >= (timeout_ms/interval_ms)) {
                         err = -1;

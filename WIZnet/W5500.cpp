@@ -1,6 +1,7 @@
 
-#include "mbed.h"
-#include "mbed_debug.h"
+//#include "mbed.h"
+//#include "mbed_debug.h"
+#include "main.h"
 #include "wiznet.h"
 #include "DNSClient.h"
 
@@ -48,7 +49,18 @@ WIZnet_Chip* WIZnet_Chip::inst;
 //     sock_any_port = SOCK_ANY_PORT_NUM;
 // }
 
-Wiznet_Chip::Wiznet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin) {
+WIZnet_Chip::WIZnet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint16_t cs_pin) {
+    this->hspi = hspi;
+    this->cs_port = cs_port;
+    this->cs_pin = cs_pin;
+
+    HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_SET);
+    inst = this;
+    sock_any_port = SOCK_ANY_PORT_NUM;
+}
+
+
+WIZnet_Chip::WIZnet_Chip(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint16_t cs_pin, GPIO_TypeDef* reset_port, uint16_t reset_pin) {
     this->hspi = hspi;
     this->cs_port = cs_port;
     this->cs_pin = cs_pin;
@@ -107,11 +119,13 @@ bool WIZnet_Chip::connect(int socket, const char * host, int port, int timeout_m
     sreg<uint16_t>(socket, Sn_DPORT, port);
     sreg<uint16_t>(socket, Sn_PORT, new_port());
     scmd(socket, CONNECT);
-    Timer t;
-    t.reset();
-    t.start();
+//    Timer t;
+//    t.reset();
+//    t.start();
+    uint32_t t;
+    t = HAL_GetTick();
     while(!is_connected(socket)) {
-        if (t.read_ms() > timeout_ms) {
+        if (HAL_GetTick() - t > (uint32_t)timeout_ms) {
             return false;
         }
     }
@@ -122,7 +136,7 @@ bool WIZnet_Chip::gethostbyname(const char* host, uint32_t* ip)
 {
     uint32_t addr = str_to_ip(host);
     char buf[17];
-    snprintf(buf, sizeof(buf), "%d.%d.%d.%d", (addr>>24)&0xff, (addr>>16)&0xff, (addr>>8)&0xff, addr&0xff);
+    snprintf(buf, sizeof(buf), "%d.%d.%d.%d", (uint8_t)(addr>>24)&0xff, (uint8_t)(addr>>16)&0xff, (uint8_t)(addr>>8)&0xff, (uint8_t)addr&0xff);
     if (strcmp(buf, host) == 0) {
         *ip = addr;
         return true;
@@ -156,9 +170,11 @@ void WIZnet_Chip::reset()
 {
     reset_pin = 1;
     reset_pin = 0;
-    wait_us(500); // 500us (w5500)
+//    wait_us(500); // 500us (w5500)
+    HAL_Delay(1);
     reset_pin = 1;
-    wait_ms(400); // 400ms (w5500)
+//    wait_ms(400); // 400ms (w5500)
+    HAL_Delay(400);
 
 #if defined(USE_WIZ550IO_MAC)
     //reg_rd_mac(SHAR, mac); // read the MAC address inside the module
@@ -196,9 +212,11 @@ int WIZnet_Chip::wait_readable(int socket, int wait_time_ms, int req_size)
     if (socket < 0) {
         return -1;
     }
-    Timer t;
-    t.reset();
-    t.start();
+//    Timer t;
+//    t.reset();
+//    t.start();
+    uint32_t t;
+    t = HAL_GetTick();
     while(1) {
         //int size = sreg<uint16_t>(socket, Sn_RX_RSR);
         int size, size2;
@@ -212,7 +230,7 @@ int WIZnet_Chip::wait_readable(int socket, int wait_time_ms, int req_size)
         if (size > req_size) {
             return size;
         }
-        if (wait_time_ms != (-1) && t.read_ms() > wait_time_ms) {
+        if (wait_time_ms != (-1) && (HAL_GetTick() - t) > (uint32_t)wait_time_ms) {
             break;
         }
     }
@@ -224,9 +242,11 @@ int WIZnet_Chip::wait_writeable(int socket, int wait_time_ms, int req_size)
     if (socket < 0) {
         return -1;
     }
-    Timer t;
-    t.reset();
-    t.start();
+//    Timer t;
+//    t.reset();
+//    t.start();
+    uint32_t t;
+    t = HAL_GetTick();
     while(1) {
         //int size = sreg<uint16_t>(socket, Sn_TX_FSR);
         int size, size2;
@@ -239,7 +259,7 @@ int WIZnet_Chip::wait_writeable(int socket, int wait_time_ms, int req_size)
         if (size > req_size) {
             return size;
         }
-        if (wait_time_ms != (-1) && t.read_ms() > wait_time_ms) {
+        if (wait_time_ms != (-1) && (HAL_GetTick() - t) > (uint32_t)wait_time_ms) {
             break;
         }
     }
@@ -334,7 +354,7 @@ void WIZnet_Chip::spi_write(uint16_t addr, uint8_t cb, const uint8_t *buf, uint1
     HAL_SPI_Transmit(hspi, &addr_h, 1, 500);
     HAL_SPI_Transmit(hspi, &addr_l, 1, 500);
     HAL_SPI_Transmit(hspi, &cb, 1, 500);
-    HAL_SPI_Transmit(hspi, buf, len, 500);
+    HAL_SPI_Transmit(hspi, (uint8_t*)buf, len, 500);
     HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_SET);
 
 #if DBG_SPI
@@ -370,7 +390,7 @@ void WIZnet_Chip::spi_read(uint16_t addr, uint8_t cb, uint8_t *buf, uint16_t len
     HAL_SPI_Transmit(hspi, &addr_l, 1, 500);
     HAL_SPI_Transmit(hspi, &cb, 1, 500);
     for(int i = 0; i < len; i++) {
-        HAL_SPI_TransmitReceive(hspi, &zero, &buf[i], 1, 500);
+        HAL_SPI_TransmitReceive(hspi, (uint8_t*)&zero, &buf[i], 1, 500);
     }
     HAL_GPIO_WritePin(cs_port, cs_pin, GPIO_PIN_SET);
 
@@ -433,14 +453,14 @@ void debug_hex(uint8_t* buf, int len)
 {
     for(int i = 0; i < len; i++) {
         if ((i%16) == 0) {
-            debug("%p", buf+i);
+//            debug("%p", buf+i);
         }
-        debug(" %02x", buf[i]);
+//        debug(" %02x", buf[i]);
         if ((i%16) == 15) {
-            debug("\n");
+//            debug("\n");
         }
     }
-    debug("\n");
+//    debug("\n");
 }
 
 #endif

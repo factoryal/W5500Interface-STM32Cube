@@ -34,7 +34,8 @@ public:
     * \param reset_port Target GPIO port start address which W5500 SPI reset pin has connected to.
     * \param reset_pin Target GPIO pin address offset which W5500 SPI chip select pin has connected to.
     */
-    EthernetInterface(SPI_HandleTypeDef* hspi, GPIO_TypeDef* cs_port, uint32_t cs_pin, GPIO_TypeDef* reset_port, uint32_t reset_pin);
+	EthernetInterface(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_port, uint16_t cs_pin);
+	EthernetInterface(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_port, uint16_t cs_pin, GPIO_TypeDef *reset_port, uint16_t reset_pin);
    
   /** Initialize the interface with DHCP w/o MAC address
   * Initialize the interface and configure it to use DHCP (no connection at this point).
